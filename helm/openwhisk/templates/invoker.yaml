@@ -5,6 +5,9 @@
 {{- if eq .Values.invoker.containerFactory.impl "docker" }}
 apiVersion: apps/v1
 kind: DaemonSet
+{{- else if eq .Values.invoker.containerFactory.impl "containerd" -}}
+apiVersion: apps/v1
+kind: DaemonSet
 {{- else if eq .Values.invoker.containerFactory.impl "kubernetes" -}}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -45,12 +48,28 @@ spec:
         configMap:
           name: docker-pull-runtimes
 {{- end }}
-
+{{- if eq .Values.invoker.containerFactory.impl "containerd" }}
+      volumes:
+{{ include "containerd_volumes" . | indent 6 }}
+      - name: task-dir
+        configMap:
+          name: containerd-pull-runtimes
+{{- end }}
+{{- if eq .Values.invoker.containerFactory.impl "containerd" }}
+      imagePullSecrets:
+      - name: openwhisk-docker-local
+{{- end }}
       initContainers:
 {{- if eq .Values.invoker.containerFactory.impl "docker" }}
       # Pull images for all default runtimes before starting invoker
 {{ include "docker_pull_runtimes" . | indent 6 }}
 {{- end }}
+{{/**
+{{- if eq .Values.invoker.containerFactory.impl "containerd" }}
+      # Pull images for all default runtimes before starting invoker
+{{ include "containerd_pull_runtimes" . | indent 6 }}
+{{- end }}
+*/}}
       # Wait for a controller to be up (which implies kafka, zookeeper, couchdb are all up as well).
 {{ include "readiness.waitForController" . | indent 6 }}
 
@@ -105,7 +124,7 @@ spec:
           - name: "INVOKER_NAME"
             valueFrom:
               fieldRef:
-                fieldPath: {{ if eq .Values.invoker.containerFactory.impl "docker" }} spec.nodeName {{ else }} metadata.name {{ end }}
+                fieldPath: {{ if eq .Values.invoker.containerFactory.impl "docker" }} spec.nodeName {{ else if eq .Values.invoker.containerFactory.impl "containerd" }} spec.nodeName {{ else }} metadata.name {{ end }}
 
           # Java options
           - name: "JAVA_OPTS"
@@ -113,7 +132,7 @@ spec:
 
           # Invoker options
           - name: "INVOKER_OPTS"
-            value: "{{ .Values.invoker.options }} {{ if eq .Values.invoker.containerFactory.impl "docker" }} -Dwhisk.spi.ContainerFactoryProvider=whisk.core.containerpool.docker.DockerContainerFactoryProvider {{ else }} -Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST -Dwhisk.spi.ContainerFactoryProvider=whisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider {{ end }}"
+            value: "{{ .Values.invoker.options }} {{ if eq .Values.invoker.containerFactory.impl "docker" }} -Dwhisk.spi.ContainerFactoryProvider=whisk.core.containerpool.docker.DockerContainerFactoryProvider {{ else if eq .Values.invoker.containerFactory.impl "containerd" }} -Dwhisk.spi.ContainerFactoryProvider=whisk.core.containerpool.containerd.ContainerdContainerFactoryProvider {{ else }} -Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST -Dwhisk.spi.ContainerFactoryProvider=whisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider {{ end }}"
 
 {{ if .Values.invoker.containerFactory.kubernetes.agent.enabled }}
           - name: "CONFIG_whisk_kubernetes_invokerAgent_enabled"
@@ -154,6 +173,17 @@ spec:
 {{- if eq .Values.invoker.containerFactory.impl "docker" }}
         volumeMounts:
 {{ include "docker_volume_mounts" . | indent 8 }}
+{{- else if eq .Values.invoker.containerFactory.impl "containerd" }}
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_ADMIN
+          privileged: true
+          runAsUser: 0
+        volumeMounts:
+{{ include "containerd_volume_mounts" . | indent 8 }}
 {{- end }}
 
 {{ if .Values.invoker.containerFactory.kubernetes.agent.enabled }}
@@ -216,3 +246,12 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
 data:
 {{ (.Files.Glob "configMapFiles/dockerPullRuntimes/playbook.yml").AsConfig | indent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: containerd-pull-runtimes
+  namespace: {{ .Release.Namespace | quote }}
+data:
+{{ (.Files.Glob "configMapFiles/dockerPullRuntimes/playbook-containerd.yml").AsConfig | indent 2 }}
