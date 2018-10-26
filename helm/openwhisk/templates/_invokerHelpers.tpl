@@ -102,21 +102,22 @@
 {{- define "containerd_pull_runtimes" -}}
 - name: docker-pull-runtimes
   imagePullPolicy: {{ .Values.invoker.imagePullPolicy | quote }}
-  image: {{ .Values.invoker.pullRuntimesImage | quote }}
+  image: {{ .Values.invoker.image | quote }}
+  command: [ "/bin/bash", "/pullRuntimes.sh" ]
+  imagePullSecrets:
+  - name: openwhisk-docker-local
   volumeMounts:
   - name: containerdrundir
     mountPath: "/run/containerd"
   - name: containerdrootdir
     mountPath: "/var/lib/containerd"
   - name: task-dir
-    mountPath: "/task/playbook.yml"
-    subPath: "playbook.yml"
+    mountPath: "/pullRuntimes.sh"
+    subPath: "pullRuntimes.sh"
   env:
     # action runtimes
     - name: "RUNTIMES_MANIFEST"
       value: {{ template "runtimes_manifest" . }}
-{{- if ne .Values.docker.registry.name "" }}
     - name: "RUNTIMES_REGISTRY"
-      value: "{{- .Values.docker.registry.name -}}/"
-{{- end -}}
+      value: "docker.io/"
 {{- end -}}

@@ -64,12 +64,10 @@ spec:
       # Pull images for all default runtimes before starting invoker
 {{ include "docker_pull_runtimes" . | indent 6 }}
 {{- end }}
-{{/**
 {{- if eq .Values.invoker.containerFactory.impl "containerd" }}
       # Pull images for all default runtimes before starting invoker
 {{ include "containerd_pull_runtimes" . | indent 6 }}
 {{- end }}
-*/}}
       # Wait for a controller to be up (which implies kafka, zookeeper, couchdb are all up as well).
 {{ include "readiness.waitForController" . | indent 6 }}
 
@@ -254,4 +252,4 @@ metadata:
   name: containerd-pull-runtimes
   namespace: {{ .Release.Namespace | quote }}
 data:
-{{ (.Files.Glob "configMapFiles/dockerPullRuntimes/playbook-containerd.yml").AsConfig | indent 2 }}
+{{ (.Files.Glob "configMapFiles/containerdPullRuntimes/pullRuntimes.sh").AsConfig | indent 2 }}
