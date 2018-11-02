@@ -170,6 +170,8 @@ verifyHealthyInvoker () {
 # Main body of script -- deploy OpenWhisk
 #################
 
+set -x
+
 SCRIPTDIR=$(cd $(dirname "$0") && pwd)
 ROOTDIR="$SCRIPTDIR/../../"
 
@@ -207,12 +209,13 @@ cat > mycluster.yaml <<EOF
 whisk:
   ingress:
     type: NodePort
-    api_host_name: $WSK_HOST
-    api_host_port: $WSK_PORT
+    apiHostName: $WSK_HOST
+    apiHostPort: $WSK_PORT
   runtimes: "runtimes-minimal-travis.json"
 
 invoker:
   containerFactory:
+    dind: true
     impl: $OW_CONTAINER_FACTORY
     kubernetes:
       agent:
