@@ -7,7 +7,7 @@
                 "image": {
                     "prefix": "openwhisk",
                     "name": "nodejs6action",
-                    "tag": "latest"
+                    "tag": "e892cd8"
                 },
                 "deprecated": false,
                 "attached": {
@@ -27,7 +27,7 @@
                 "image": {
                     "prefix": "openwhisk",
                     "name": "action-nodejs-v8",
-                    "tag": "latest"
+                    "tag": "e892cd8"
                 },
                 "deprecated": false,
                 "attached": {
