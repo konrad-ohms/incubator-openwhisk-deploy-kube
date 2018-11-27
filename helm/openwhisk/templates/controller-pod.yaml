@@ -29,6 +29,10 @@ spec:
 {{ include "affinity.selfAntiAffinity" ( .Values.controller.name | quote ) | indent 8 }}
       {{- end }}
 
+{{- if eq .Values.invoker.containerFactory.impl "containerd" }}
+      imagePullSecrets:
+      - name: openwhisk-docker-local
+{{- end }}
       initContainers:
       # The controller must wait for kafka and couchdb to be ready before it starts
 {{ include "readiness.waitForKafka" . | indent 6 }}
