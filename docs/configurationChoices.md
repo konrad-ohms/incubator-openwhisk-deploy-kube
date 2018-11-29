@@ -171,7 +171,9 @@ component on Kubernetes (selected by picking a
       operations have higher latency and exercise newer code paths in
       the Invoker.  However, this design fully leverages Kubernetes to
       manage the execution resources for user functions.
-
+  3. `ContainerdContainerFactory` can be used to leverage containerd in 
+      Kubernetes setups which replaced docker with containerd as container engine.
+   
 You can control the selection of the ContainerFactory by adding either
 ```yaml
 invoker:
@@ -183,6 +185,13 @@ or
 invoker:
   containerFactory:
     impl: "kubernetes"
+```
+or
+```yaml
+invoker:
+  containerFactory:
+    impl: "containerd"
+  image: "openwhisk-docker-local.artifactory.swg-devops.com/konrad.ohms_at_de.ibm.com/invoker-wskc:2fea299-2e365c8"
 ```
 to your `mycluster.yaml`
 

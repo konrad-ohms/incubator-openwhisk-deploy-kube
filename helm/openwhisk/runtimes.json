@@ -6,7 +6,7 @@
                 "image": {
                     "prefix": "openwhisk",
                     "name": "nodejsaction",
-                    "tag": "latest"
+                    "tag": "09ac899"
                 },
                 "deprecated": true
             },
@@ -16,7 +16,7 @@
                 "image": {
                     "prefix": "openwhisk",
                     "name": "nodejs6action",
-                    "tag": "latest"
+                    "tag": "09ac899"
                 },
                 "deprecated": false,
                 "stemCells": [{
